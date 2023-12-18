@@ -5,19 +5,16 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     // Creación del 'EntityManagerFactory' para gestionar la unidad de persistencia 'ClinicaVeterinariaPU'
-    private static EntityManagerFactory emf = Persistence.createEntityManagerFactory("ClinicaVeterinariaPU");
-
+    private static EntityManagerFactory em = Persistence.createEntityManagerFactory("ClinicaVeterinariaPU");
+    EntityManager emf = em.createEntityManager();
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         // Creación de 'EntityManager' para interactuar con la base de datos
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = Main.em.createEntityManager();
 
         try {
             boolean exit = false; // Control de flujo para salir del programa
@@ -28,8 +25,9 @@ public class Main {
                 System.out.println("2. Añadir");
                 System.out.println("3. Actualizar");
                 System.out.println("4. Eliminar");
+                System.out.println("5. Consultas JPQL");
                 // Aplicar color rojo a la opción de salir
-                System.out.println(ANSI_RED + "5. Salir" + ANSI_RESET);
+                System.out.println(ANSI_RED + "6. Salir" + ANSI_RESET);
                 System.out.print("Seleccione una opción: ");
 
                 int option = scanner.nextInt(); // Lee la opción del usuario
@@ -48,18 +46,19 @@ public class Main {
                     case 4: // Opción de eliminar
                         showDeleteMenu(scanner, em);
                         break;
-                    case 5: // Opción de salir
+                    case 5: // Opción de Consultas
+                        menuConsultasJPQL(scanner, em);
+                        break;
+                    case 6:
                         exit = true;
                         System.out.println(ANSI_RED + "\nSaliendo del programa..." + ANSI_RESET);
                         break;
-                    default: // Opción no válida
-                        System.out.println("\nOpción no válida. Por favor, intente de nuevo.\n");
                 }
             }
         } finally {
             // Cerrar el 'EntityManager' y 'EntityManagerFactory' al finalizar el programa
             em.close();
-            emf.close();
+            Main.em.close();
             scanner.close();
         }
     }
@@ -296,20 +295,31 @@ public class Main {
 
     //Metodo para añadir Visitas
     private static void addVisita(Scanner scanner, EntityManager em) {
+        Long mascotaId = null;
+        Mascota mascota = null;
+        boolean idValido = false;
+
         // Mostrar el listado de mascotas para que el usuario pueda elegir
         System.out.println("Mascotas registradas:");
         listMascotas(em); // Asegúrate de que este método lista las mascotas con sus IDs
 
-        System.out.println("\nSeleccione el ID de la mascota para la visita:");
-        Long mascotaId = scanner.nextLong();
-        scanner.nextLine(); // Consumir la nueva línea
+        while (!idValido) {
+            try {
+                System.out.print("\nSeleccione el ID de la mascota para la visita: ");
+                mascotaId = scanner.nextLong();
+                scanner.nextLine(); // Consumir la nueva línea
 
-        Mascota mascota = em.find(Mascota.class, mascotaId);
-        if (mascota == null) {
-            System.out.println("Mascota no encontrada con el ID: " + mascotaId + ". Intente nuevamente.");
-            return;
+                mascota = em.find(Mascota.class, mascotaId);
+                if (mascota == null) {
+                    System.out.println("Mascota no encontrada con el ID: " + mascotaId + ". Intente nuevamente.");
+                } else {
+                    idValido = true; // ID es válido y la mascota existe
+                }
+            } catch (InputMismatchException ime) {
+                System.out.println("Entrada inválida. Por favor, introduzca un número de ID válido.");
+                scanner.nextLine(); // Limpiar el buffer del scanner
+            }
         }
-
         // Continuar con el proceso de añadir una nueva visita
         System.out.print("Introduce la fecha de la visita (yyyy-MM-dd): ");
         String fechaStr = scanner.nextLine();
@@ -622,7 +632,84 @@ public class Main {
         }
     }
 
+    // Menu de consulpas JPQL
+    private static void menuConsultasJPQL(Scanner scanner, EntityManager em ) {
+        System.out.println("\nMenu de Consultas:");
+        System.out.println("1. Buscar mascotas por tipo");
+        System.out.println("2. Buscar dueños con más de 2 mascotas");
+        System.out.println("3. Buscar visitas por nombre de mascota");
+        System.out.println("4. Buscar visitas por motivo de 'Vacunación'");
+        System.out.println("5. Salir");
+        System.out.print("Elige una opción: ");
 
+        int opcion = scanner.nextInt();
+        scanner.nextLine();
+        switch (opcion) {
+            case 1:
+                buscarMascotasPorTipo(scanner, (EntityManager) em);
+                break;
+            case 2:
+                buscarDuenosConMuchasMascotas((EntityManager) em);
+                break;
+            case 3:
+                buscarVisitasPorNombreMascota(scanner, (EntityManager) em);
+                break;
+            case 4:
+                buscarVisitasPorMotivoVacunacion((EntityManager) em);
+                break;
+            case 5:
+                // Salir del menú de consultas JPQL
+                break;
+            default:
+                System.out.println("Opción no válida. Por favor, intenta de nuevo.");
+        }
+
+    }
+
+    // Método para buscar mascotas por tipo. El usuario escribirá un tipo (string) y se mostrarán todas las mascotas
+// de ese tipo
+    private static void buscarMascotasPorTipo(Scanner scanner, EntityManager em) {
+        System.out.print("Ingresa el tipo de mascota (ej. 'Perro'): ");
+        String tipo = scanner.nextLine();
+        List<Mascota> mascotas = em.createQuery("SELECT m FROM Mascota m WHERE m.tipo = :tipo", Mascota.class)
+                .setParameter("tipo", tipo)
+                .getResultList();
+        mascotas.forEach(m -> System.out.println("Mascota: " + m.getNombre() + ", Tipo: " + m.getTipo()));
+    }
+
+    // Método para buscar dueños que tengan más de 2 mascotas.
+    private static void buscarDuenosConMuchasMascotas(EntityManager em) {
+        List<Dueno> duenos = em.createQuery("SELECT d FROM Dueno d WHERE SIZE(d.mascotas) > 2", Dueno.class)
+                .getResultList();
+        if (duenos.isEmpty()) {
+            System.out.println("No se encontraron dueños con más de 2 mascotas.");
+        } else {
+            duenos.forEach(d -> System.out.println("Dueño: " + d.getNombre() + ", Número de Mascotas: " + d.getMascotas().size()));
+        }
+    }
+
+    // Método para mostrar todas las visitas de tipo vacunación.
+    private static void buscarVisitasPorMotivoVacunacion(EntityManager em) {
+        String motivo = "Vacunación";
+        List<Visita> visitas = em.createQuery("SELECT v FROM Visita v WHERE v.motivoConsulta = :motivo", Visita.class)
+                .setParameter("motivo", motivo)
+                .getResultList();
+        if (visitas.isEmpty()) {
+            System.out.println("No se encontraron visitas con el motivo de 'Vacunación'.");
+        } else {
+            visitas.forEach(v -> System.out.println("Fecha: " + v.getFecha() + ", Mascota: " + v.getMascota().getNombre()));
+        }
+    }
+
+    // Método para buscar visitas por nombre de mascota
+    private static void buscarVisitasPorNombreMascota(Scanner scanner, EntityManager em) {
+        System.out.print("Ingresa el nombre de la mascota: ");
+        String nombreMascota = scanner.nextLine();
+        List<Visita> visitas = em.createQuery("SELECT v FROM Visita v WHERE v.mascota.nombre = :nombreMascota", Visita.class)
+                .setParameter("nombreMascota", nombreMascota)
+                .getResultList();
+        visitas.forEach(v -> System.out.println("Fecha: " + v.getFecha() + ", Motivo: " + v.getMotivoConsulta()));
+    }
 
 
 }

@@ -14,7 +14,8 @@ El sistema de gestión de clínica veterinaria está diseñado para facilitar la
 El proyecto sigue un patrón MVC (Modelo-Vista-Controlador), donde el modelo representa las entidades de la base de datos, la vista corresponde a la interacción del usuario con el sistema y el controlador gestiona la lógica del negocio.
 
 ### Diagrama de Clases
-[Incluir aquí el diagrama de clases, mostrando las entidades `Dueño`, `Mascota` y `Visita`, y sus relaciones.]
+![ClinicaVeterinariaJPA.png](ClinicaVeterinariaJPA.png)
+
 
 ## 3. Modelo de Datos
 
@@ -37,36 +38,59 @@ El proyecto sigue un patrón MVC (Modelo-Vista-Controlador), donde el modelo rep
 
 ## 4. Consultas JPQL
 
-[Listar las consultas JPQL usadas en el proyecto junto con una breve descripción de su función y dónde se utilizan en el sistema.]
+El sistema utiliza JPQL (Java Persistence Query Language) para realizar consultas a la base de datos de manera robusta y portátil. Las siguientes son algunas de las consultas clave usadas:
+
+- **Buscar Mascotas por Tipo**:
+  `SELECT m FROM Mascota m WHERE m.tipo = :tipo`
+  Esta consulta recupera todas las mascotas de un tipo específico, como 'Perro' o 'Gato'.
+
+- **Buscar Dueños con Más de 2 Mascotas**:
+  `SELECT d FROM Dueno d WHERE SIZE(d.mascotas) > 2`
+  Utilizada para identificar dueños que tienen más de dos mascotas.
+
+- **Buscar Visitas por Nombre de Mascota**:
+  `SELECT v FROM Visita v WHERE v.mascota.nombre = :nombreMascota`
+  Filtra las visitas asociadas a una mascota específica por su nombre.
+
+- **Buscar Visitas por Motivo de 'Vacunación'**:
+  `SELECT v FROM Visita v WHERE v.motivoConsulta = 'Vacunación'`
+  Selecciona todas las visitas que tienen como motivo 'Vacunación'.
+
+Estas consultas son utilizadas en diversas partes del sistema para ofrecer información detallada y actualizada a los usuarios.
 
 ## 5. Configuración y Despliegue
 
 ### Configuración del Proyecto
-- **Configuración de la Base de Datos**: [Detalles de cómo configurar la base de datos.]
-- **Configuración del Entorno de Desarrollo**: [Pasos para configurar el proyecto en un IDE, como IntelliJ IDEA.]
+
+#### Configuración de la Base de Datos
+Para configurar la base de datos, se requiere:
+
+1. Crear una base de datos H2 o configurar una base de datos de su elección.
+2. Configurar el archivo `persistence.xml` con los detalles de conexión a la base de datos.
+
+#### Configuración del Entorno de Desarrollo
+Para configurar el proyecto en un IDE como IntelliJ IDEA:
+
+1. Clonar el repositorio del proyecto.
+2. Importar el proyecto como un proyecto Maven.
+3. Configurar el SDK de Java, preferiblemente Java 11 o superior.
+4. Verificar que todas las dependencias Maven estén correctamente importadas.
 
 ### Despliegue del Proyecto
-- **Pasos para el Despliegue**: [Describir los pasos necesarios para desplegar y ejecutar el proyecto.]
+Para desplegar y ejecutar el proyecto:
 
-## 6. Pruebas
+1. Compilar el proyecto utilizando Maven con el comando `mvn clean install`.
+2. Ejecutar el archivo JAR generado o ejecutar la clase principal desde el IDE.
+3. Asegurarse de que la base de datos esté en ejecución y accesible.
 
-### Pruebas Unitarias Implementadas
-- **Test A**: Prueba la funcionalidad X, enfocándose en Y.
-- **Test B**: Verifica la funcionalidad Z.
-
-### Propósito de las Pruebas
-- **Test A**: Asegura que X funcione como se espera.
-- **Test B**: Comprueba la correcta implementación de Z.
-
-## 7. Conclusiones y Posibles Mejoras
+## 6. Conclusiones y Posibles Mejoras
 
 ### Reflexiones sobre el Desarrollo
-[Reflexiones personales sobre el proceso de desarrollo y aprendizaje durante la creación del sistema.]
+El desarrollo del sistema fue un ejercicio enriquecedor que puso a prueba nuestras habilidades en la creación de aplicaciones con Java y JPA, ofreciendo una base sólida para comprender la persistencia de datos y la interacción con bases de datos.
 
 ### Áreas de Mejora y Características Futuras
-- **Área de Mejora 1**: [Descripción de la mejora].
-- **Característica Futura 1**: [Descripción de la característica].
+- **Interfaz de Usuario Gráfica**: Implementar una interfaz gráfica para mejorar la interacción del usuario con el sistema.
+- **Autenticación y Seguridad**: Añadir un sistema de autenticación para los usuarios y mejorar la seguridad de la aplicación.
+- **Reportes y Estadísticas**: Desarrollar una funcionalidad para generar reportes y estadísticas sobre las mascotas y visitas.
 
 ---
-
-Esta documentación proporciona una guía integral para comprender y trabajar con el Sistema de Gestión de Clínica Veterinaria, abarcando desde su configuración inicial hasta las posibles mejoras futuras.
